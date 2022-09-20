@@ -19,10 +19,9 @@ import glob
 
 # Configuration
 
-# inPath = Path('./Source')
 outPath = Path('./Result/output.xml')
 errorPath = Path('errors.csv')
-dupePath = Path('duplicates.csv')
+dupePath = Path('./Result/duplicates.csv')
 headerExist = True
 langCheck = True
 
@@ -34,9 +33,8 @@ parser = argparse.ArgumentParser(description='Takes a CSV and returns an XML fil
 
 parser.add_argument('-source', type=Path, nargs='?', help='Path to a csv file with translation language code, key, and value terms. Defaults to the most recently modified file in the local "Source" folder.')
 parser.add_argument('-allowed', type=Path, nargs='?', help='Path to a csv file containing the region description and the corresponding language code. Defaults to "allowedLanguageCodes.csv" in the local directory.')
-# TODO Update Help message
-parser.add_argument('-headerExists', default=False, action='store_true', help='Defaults to "allowedLanguageCodes.csv" in the local directory.')
-parser.add_argument('-checkLang', default=True, action='store_false', help='Defaults to "allowedLanguageCodes.csv" in the local directory.')
+parser.add_argument('-headerExists', default=False, action='store_true', help='Add this flag when a header row exists.')
+parser.add_argument('-bypassLangCheck', default=False, action='store_true', help='Bypasses the language code check.')
 parser.add_argument('-verbose', default=False, action='store_true', help='Prints debugging information.')
 
 args = parser.parse_args()
@@ -77,7 +75,7 @@ if args.verbose:
 
 # region Error Checking
 
-options = [args.headerExists, args.checkLang]
+options = [args.headerExists, args.bypassLangCheck]
 
 class LanguageCodeError(Exception):
     pass
@@ -172,7 +170,7 @@ def writeToFile(data:ET.Element, path:Path):
     with path.open('w', encoding='utf-8') as file:
         file.write(tmpString)
 
-def getExistingDictionary(root: Element, langCode: str) -> Element|None:
+def getExistingDictionary(root: Element, langCode: str) -> Element:
     dictionaries = root.findall('dictionaries/dictionary')
     for d in dictionaries:
         lang = d.get('language')
