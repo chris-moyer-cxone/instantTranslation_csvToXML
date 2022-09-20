@@ -75,13 +75,13 @@ if args.verbose:
 
 # region Error Checking
 
-options = [args.headerExists, args.bypassLangCheck]
+options = [args.headerExists, args.bypassLangCheck, args.verbose]
 
 class LanguageCodeError(Exception):
     pass
 
 def errorChecker(rows, options):
-    headerExist, checkLang = options
+    headerExist, checkLang, verbose = options
 
     onErrorMessage = f"See line errors.csv for a list of rows with invalid language codes.\nVisit https://success.mindtouch.com/Admin/Instant_Translation/Reference_for_Language_Codes for more information." 
     onSuccessMessage = f"No issues found!"
@@ -122,7 +122,6 @@ def errorChecker(rows, options):
             dupeRows.append([term.srcRowNum, dictionary.langCode, term.key, term.value])
     
     if dupeRows != []:
-        print('dupes found')
         dupeRows.sort(key=lambda e: e[0])
         with dupePath.open('w', encoding='utf-8', newline='') as file:
             writer = csv.writer(file)
@@ -131,7 +130,8 @@ def errorChecker(rows, options):
     for langCode in langMap:
         langDictionary = langMap[langCode]
         for term in langDictionary.terms:
-            print(f"{langDictionary.langCode}: {term}")
+            if verbose:
+                print(f"{langDictionary.langCode}: {term}")
 
 
 # endregion
@@ -175,7 +175,6 @@ def getExistingDictionary(root: Element, langCode: str) -> Element:
     dictionaries = root.findall('dictionaries/dictionary')
     for d in dictionaries:
         lang = d.get('language')
-        print(lang)
         if lang == langCode: return d
     return None
 
@@ -202,18 +201,19 @@ def csvToXml(rows):
         value = createValue(term, text=row[2])
 
     writeToFile(root, outPath)
+    print(f"Success! Your file is at {outPath.as_posix()}")
 
-rows = []
-with inPath.open('r', encoding='utf-8') as file:
-    reader = csv.reader(file)
-    for row in reader:
-        if headerExist:
-            headerExist = False
-            continue
-        rows.append(row)
 
 # endregion
 
 if __name__ == "__main__":
+    rows = []
+    with inPath.open('r', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            if headerExist:
+                headerExist = False
+                continue
+            rows.append(row)
     errorChecker(rows, options)
     csvToXml(rows)
