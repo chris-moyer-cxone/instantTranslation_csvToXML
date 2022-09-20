@@ -1,0 +1,10 @@
+<script type="text/xml">
+   <dictionaries>
+      <dictionary language="en">
+         <term>
+            <key>test</key>
+            <value>response</value>
+         </term>
+      </dictionary>
+   </dictionaries>
+</script>

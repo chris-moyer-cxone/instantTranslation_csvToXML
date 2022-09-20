@@ -1,5 +1,7 @@
 Result/*
+!/Result/sampleOutput.xml
 Source/*
+!/Source/sampleSource.csv
 duplicates.csv
 example*
 __pycache*

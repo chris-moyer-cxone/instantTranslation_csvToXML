@@ -156,7 +156,8 @@ createKey = partial(createEl, 'key')
 createValue = partial(createEl, 'value')
 
 def xmlToString(data:ET.Element):
-    return minidom.parseString(ET.tostring(data , encoding='utf-8', method='html', xml_declaration=None)).toprettyxml(indent="   ")
+    # Removed xml_declaration=None from ET.tostring() to support Python 3.6
+    return minidom.parseString(ET.tostring(data , encoding='utf-8', method='html')).toprettyxml(indent="   ")
 
 def writeToFile(data:ET.Element, path:Path):
     outString = xmlToString(data)

@@ -33,7 +33,7 @@ class LangTerm:
 
 class LangDict:
     langCode: str
-    terms: list[LangTerm]
+    terms: list # [LangTerm] Python 3.6 doesn't support type hints for subscriptable objects
     def __init__(self, langCode, *_, terms:list=None) -> None:
         self.langCode = langCode
         self.terms = terms if terms != None else list()
