@@ -14,6 +14,7 @@ from langDictionary import LangTerm, LangDict
 import argparse
 import os
 import glob
+import pandas as pd
 
 
 
@@ -29,13 +30,14 @@ langCheck = True
 
 # region args
 
-parser = argparse.ArgumentParser(description='Takes a CSV and returns an XML file formatted appropriately for usage as a Custom Dictionary with CXone Expert.')
+parser = argparse.ArgumentParser(description="Takes an XLSX or UTF-8 encoded CSV and returns an XML file formatted appropriately for usage as a Custom Dictionary with CXone Expert.")
 
-parser.add_argument('-source', type=Path, nargs='?', help='Path to a csv file with translation language code, key, and value terms. Defaults to the most recently modified file in the local "Source" folder.')
-parser.add_argument('-allowed', type=Path, nargs='?', help='Path to a csv file containing the region description and the corresponding language code. Defaults to "allowedLanguageCodes.csv" in the local directory.')
-parser.add_argument('-headerExists', default=False, action='store_true', help='Add this flag when a header row exists.')
-parser.add_argument('-bypassLangCheck', default=False, action='store_true', help='Bypasses the language code check.')
-parser.add_argument('-verbose', default=False, action='store_true', help='Prints debugging information.')
+parser.add_argument('--source', type=Path, nargs='?', help='Path to an xlsx or csv file with translation language code, key, and value terms. Defaults to the most recently modified file in the local "Source" folder.')
+parser.add_argument('--sheet', type=str, nargs='?', help='Only needed when providing .xlsx files. Name of the sheet where the source data is located.')
+parser.add_argument('--allowed', type=Path, nargs='?', help='Path to a csv file containing the region description and the corresponding language code. Defaults to "allowedLanguageCodes.csv" in the local directory.')
+parser.add_argument('--headerExists', default=False, action='store_true', help='Add this flag when a header row exists.')
+parser.add_argument('--bypassLangCheck', default=False, action='store_true', help='Bypasses the language code check.')
+parser.add_argument('--verbose', default=False, action='store_true', help='Prints debugging information.')
 
 args = parser.parse_args()
 
@@ -49,13 +51,9 @@ langSrc = args.allowed if args.allowed else Path('allowedLanguageCodes.csv')
 langDict = {}
 langCodes = []
 
-with langSrc.open('r',encoding='Latin_1') as data:
-    reader = csv.reader(data)
-
-    for row in reader:
-        langCodes.append(row[1])
-        langDict[row[1]] = row[0]
-
+langCodesDF = pd.read_csv(langSrc)
+langCodes = list(langCodesDF.code)
+languages = list(langCodesDF.language)
 
 # Default Source File Setup
 srcFiles = glob.glob('Source/*.csv')
@@ -68,6 +66,25 @@ else:
 inPath = args.source if args.source else inPath
 if args.verbose:
     print(f"Path to source file: {inPath}")
+
+# endregion
+
+# region General Helpers
+
+class UnsupportedFileExtension(Exception): pass
+class ExcelSheetNameRequired(Exception): pass
+
+def ingestStructuredData(p:Path, sheet:str=None) -> list:
+    '''Takes in a path, returns either a list of rows or None if something went wrong.'''
+    extension = p.suffix
+
+    if extension == '.xlsx': 
+        if sheet == None: raise ExcelSheetNameRequired('When using .xlsx files, you must include the \
+            --sheet argument and the name of the sheet where data lives.')
+        return pd.read_excel( p, sheet ).values.tolist()
+    elif extension == '.csv': return pd.read_csv( p ).values.tolist()
+    else: 
+        raise UnsupportedFileExtension('Only .xlsx or .csv files are supported.')
 
 # endregion
 
@@ -84,28 +101,24 @@ def errorChecker(rows, options):
     headerExist, checkLang, verbose = options
 
     onErrorMessage = f"See line errors.csv for a list of rows with invalid language codes.\nVisit https://success.mindtouch.com/Admin/Instant_Translation/Reference_for_Language_Codes for more information." 
-    onSuccessMessage = f"No issues found!"
 
-    header = [['source row number', 'language code', 'key', 'value']]
+    header = [['source row number', 'language code', 'findTerm', 'replaceTerm']]
     langMap = {}
     errorRows = []
     dupeRows = []
 
-    for index, (lang, key, val) in enumerate(rows):
+    for index, (lang, findTerm, replaceTerm) in enumerate(rows):
         if lang not in langMap: langMap[lang] = LangDict(lang)
-        langMap[lang].terms.append( LangTerm( key, val, srcRow=index) )
+        langMap[lang].terms.append( LangTerm( findTerm, replaceTerm, srcRow=index) )
 
         if checkLang and lang not in langCodes:
             # rows already has reduced the row count by 1 compared to source
             # For some reason, this means I need to increment by 1 more than below
             # to accommodate this shift.
             rowNum = index + 3 if headerExist else index + 2
-            errorRows.append([rowNum, lang, key, val])
+            errorRows.append([rowNum, lang, findTerm, replaceTerm])
             continue
         
-    # if errorRows == []:
-    #     print(onSuccessMessage)
-    #     return
     if errorRows != []:
         header.extend(errorRows)
         with errorPath.open('w', encoding='utf-8', newline='') as file:
@@ -190,7 +203,7 @@ def csvToXml(rows):
         if row[0] not in langCodes:
             rowNum = index + 2 if headerExist else index + 1
             message = f"Language code provided not allowed. See line {rowNum} in source CSV file.\nVisit https://success.mindtouch.com/Admin/Instant_Translation/Reference_for_Language_Codes for more information." 
-            # raise LanguageCodeError(message)
+            raise LanguageCodeError(message)
         existingDict = getExistingDictionary(root, row[0])
         if existingDict:
             dictionary = existingDict
@@ -207,13 +220,8 @@ def csvToXml(rows):
 # endregion
 
 if __name__ == "__main__":
-    rows = []
-    with inPath.open('r', encoding='utf-8') as file:
-        reader = csv.reader(file)
-        for row in reader:
-            if headerExist:
-                headerExist = False
-                continue
-            rows.append(row)
+    rows = ingestStructuredData(inPath, args.sheet)
+
+    if args.verbose: pprint(rows)
     errorChecker(rows, options)
     csvToXml(rows)

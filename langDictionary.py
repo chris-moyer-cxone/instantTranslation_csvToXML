@@ -4,8 +4,8 @@ from pprint import pprint
 @total_ordering
 class LangTerm:
     srcRowNum: int
-    key: str
-    value: str
+    key: str # findTerm
+    value: str # replaceTerm
     unique: bool
     def __init__(self, key, value, *_, srcRow:int=None, hashValue:bool=False, unique:bool=False) -> None:
         self.key = key

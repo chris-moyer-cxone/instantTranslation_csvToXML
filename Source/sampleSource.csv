@@ -1,2 +1,7 @@
-langCode,key,value
+langCode,findTerm,replaceTerm
 en,test,response
+en,this,that
+es,hello how are you,¡Hola! ¿Qué tal?
+ja,goodbye,sayonara
+ja,hello,こんにちは
+he,hello,שלום
