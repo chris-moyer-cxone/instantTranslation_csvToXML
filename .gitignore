@@ -6,3 +6,4 @@ Source/*
 !/Source/sampleSource.csv
 
 *.test.py
+!*readme.md
