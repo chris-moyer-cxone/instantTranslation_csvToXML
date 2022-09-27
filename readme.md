@@ -10,8 +10,8 @@ This guide assumes basic knowledge of command prompt or terminal and knowledge o
 
 ## General Usage
 - Place the customer's customDictionarySource.csv file into the Source folder
-- Execute "python main.py" if no header exists in the CSV file. "python main.py -headerExists" if one does.
->  🎈 Since the provided sample CSV file contains a header row, the default example below includes the -headerExists flag
+- Execute "python main.py" if no header exists in the CSV file. "python main.py --headerExists" if one does.
+>  🎈 Since the provided sample CSV file contains a header row, the default example below includes the --headerExists flag
 
 - The resulting "output.xml" file will appear in the Result folder
     - output.xml will be overwritten on next execution. Be sure to rename output.xml if you need to keep it.
@@ -24,12 +24,12 @@ This guide assumes basic knowledge of command prompt or terminal and knowledge o
 
 Default Run Command
 ```
-python main.py -headerExists
+python main.py --headerExists
 ```
 
 Specific Source File
 ```
-python main.py -source .\Source\customDictionarySource.csv
+python main.py --source .\Source\customDictionarySource.csv
 ```
 
 When providing a path on Windows, use the \ character to separate Path elements. 
@@ -37,12 +37,12 @@ On Mac or Linux, use the / character.
 
 Use Most Recently Modified CSV File in Source, and Header Row Exists
 ```
-python main.py -headerExists
+python main.py --headerExists
 ```
 
 Example Troubleshooting Command
 ```
-python main.py -source .\Source\customDictionarySource.csv -bypassLangCheck -verbose
+python main.py --source .\Source\customDictionarySource.csv --bypassLangCheck --verbose
 ```
 
 ## Flags
